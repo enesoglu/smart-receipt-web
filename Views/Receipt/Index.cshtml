@@ -1,0 +1,98 @@
+﻿@{
+    ViewData["Title"] = "All Receipts";
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">All Receipts</h2>
+            <p class="text-muted">View and manage all your receipts.</p>
+        </div>
+        <button class="btn btn-success" onclick="alert('Please use the Dashboard to add new receipts.')">
+            <i class="bi bi-plus-lg"></i> Add Receipt
+        </button>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-10">
+                    <input type="text" class="form-control" placeholder="Search by store name or tags...">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100"><i class="bi bi-funnel"></i> Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Store Name</th>
+                        <th>Date</th>
+                        <th>Tags</th>
+                        <th>Total Amount</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="receiptsTableBody">
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <div class="spinner-border text-success" role="status"></div>
+                            <span class="ms-2">Loading receipts...</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://localhost:5069/api/receipts";
+
+    document.addEventListener("DOMContentLoaded", async function() {
+        const tableBody = document.getElementById("receiptsTableBody");
+        
+        try {
+            const response = await fetch(API_URL);
+            
+            if (!response.ok) throw new Error("API Error");
+
+            const receipts = await response.json();
+            
+            if (receipts.length === 0) {
+                 tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">No receipts found.</td></tr>`;
+                 return;
+            }
+
+            tableBody.innerHTML = ""; // Clear loading state
+
+            receipts.forEach(receipt => {
+                // Format Date (International/US format)
+                const date = new Date(receipt.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                
+                const row = `
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">${receipt.storeName}</td>
+                        <td class="text-muted">${date}</td>
+                        <td><span class="badge bg-info bg-opacity-10 text-info">Groceries</span></td>
+                        <td class="fw-bold">$${receipt.totalAmount.toFixed(2)}</td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-light text-primary" title="View"><i class="bi bi-eye"></i></button>
+                            <button class="btn btn-sm btn-light text-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+
+        } catch (error) {
+            console.error(error);
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Failed to load data. Is the API running?</td></tr>`;
+        }
+    });
+</script>
