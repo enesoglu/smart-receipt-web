@@ -52,7 +52,7 @@
 </div>
 
 <script>
-    const API_URL = "https://localhost:5069/api/receipts";
+    const API_URL = "https://localhost:7018/api/receipts";
 
     document.addEventListener("DOMContentLoaded", async function() {
         const tableBody = document.getElementById("receiptsTableBody");
@@ -71,8 +71,7 @@
 
             tableBody.innerHTML = ""; // Clear loading state
 
-            receipts.forEach(receipt => {
-                // Format Date (International/US format)
+            receipts.forEach(receipt => {-
                 const date = new Date(receipt.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
                 
                 const row = `
