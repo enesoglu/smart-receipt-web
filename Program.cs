@@ -32,9 +32,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 // Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
-// Register AuthService
-builder.Services.AddScoped<IAuthService, AuthService>();
-
 // Configure HttpClient for API calls
 builder.Services.AddHttpClient<IReceiptApiService, ReceiptApiService>()
     .ConfigureHttpClient(client =>
@@ -51,7 +48,7 @@ builder.Services.AddHttpClient<IReceiptApiService, ReceiptApiService>()
     });
 
 // Configure HttpClient for Auth calls
-builder.Services.AddHttpClient<AuthService>()
+builder.Services.AddHttpClient<IAuthService, AuthService>()
     .ConfigureHttpClient(client =>
     {
         client.Timeout = TimeSpan.FromSeconds(30);
