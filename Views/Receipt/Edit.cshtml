@@ -1,0 +1,74 @@
+@model ReceiptEditViewModel
+@{
+    ViewData["Title"] = "Edit Receipt";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2 py-4">
+            <!-- Error Messages -->
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="card border-0 shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Receipt</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" asp-action="Edit" asp-route-id="@Model.Id">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label asp-for="StoreName" class="form-label">Store Name <span class="text-danger">*</span></label>
+                            <input asp-for="StoreName" class="form-control" placeholder="e.g. Whole Foods Market" required>
+                            <span asp-validation-for="StoreName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Date" class="form-label">Date <span class="text-danger">*</span></label>
+                            <input type="date" asp-for="Date" class="form-control" required>
+                            <span asp-validation-for="Date" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="TotalAmount" class="form-label">Total Amount <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" asp-for="TotalAmount" class="form-control" placeholder="0.00" required>
+                            <span asp-validation-for="TotalAmount" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Tags" class="form-label">Tags (comma-separated)</label>
+                            <input asp-for="Tags" class="form-control" placeholder="e.g. Groceries, Organic, Weekly Shop">
+                            <small class="text-muted">Optional: categorize your receipt</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ImagePath" class="form-label">Image Path</label>
+                            <input asp-for="ImagePath" class="form-control" placeholder="Optional">
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/Receipt/Index" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success">Update Receipt</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+

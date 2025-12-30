@@ -1,4 +1,5 @@
-﻿@{
+@model DashboardViewModel
+@{
     ViewData["Title"] = "Dashboard";
 }
 
@@ -6,6 +7,7 @@
 
 <div class="container-fluid">
     <div class="row">
+        <!-- Sidebar -->
         <div class="col-md-2 d-none d-md-block bg-light sidebar min-vh-100 shadow-sm">
             <div class="position-sticky pt-3">
                 <h4 class="px-3 mb-4 text-success fw-bold"><i class="bi bi-receipt-cutoff"></i> SmartReceipt</h4>
@@ -21,7 +23,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-secondary mx-2 mb-2" href="#">
+                        <a class="nav-link text-secondary mx-2 mb-2" href="/Home/Reports">
                             <i class="bi bi-bar-chart-line me-2"></i> Reports
                         </a>
                     </li>
@@ -35,57 +37,60 @@
             </div>
         </div>
 
+        <!-- Main Content -->
         <main class="col-md-10 ms-sm-auto px-md-4 py-4 bg-light bg-opacity-25">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Overview</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <div class="text-muted">Welcome back! Here's your spending overview.</div>
-                </div>
+                <h1 class="h2">Dashboard</h1>
+                <div class="text-muted">Welcome back! Here's your spending overview.</div>
             </div>
 
+            <!-- Summary Cards -->
             <div class="row g-4 mb-4">
+                <!-- Total Monthly Spend -->
                 <div class="col-md-4">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-body">
                             <h6 class="text-muted text-uppercase small">Total Monthly Spend</h6>
                             <div class="d-flex justify-content-between align-items-center mt-3">
                                 <div>
-                                    <h2 class="fw-bold mb-0" id="totalSpendText">0.00 ₺</h2>
-                                    <small class="text-muted" id="currentMonthText">...</small>
+                                    <h2 class="fw-bold mb-0">₺@Model.TotalMonthlySpend.ToString("N2")</h2>
+                                    <small class="text-muted">@DateTime.Now.ToString("MMMM yyyy")</small>
                                 </div>
                                 <div class="bg-success bg-opacity-10 p-3 rounded-circle">
-                                    <i class="bi bi-currency-dollar text-success fs-3"></i>
+                                    <i class="bi bi-currency-lira text-success fs-3"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Average Receipt Value -->
                 <div class="col-md-4">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-body">
-                            <h6 class="text-muted text-uppercase small">Total Receipts</h6>
+                            <h6 class="text-muted text-uppercase small">Average Receipt Value</h6>
                             <div class="d-flex justify-content-between align-items-center mt-3">
                                 <div>
-                                    <h2 class="fw-bold mb-0" id="receiptCountText">0</h2>
-                                    <small class="text-success fw-bold"><i class="bi bi-arrow-up"></i> Current</small>
+                                    <h2 class="fw-bold mb-0">₺@Model.AverageReceiptValue.ToString("N2")</h2>
+                                    <small class="text-success fw-bold"><i class="bi bi-arrow-up"></i> Per transaction</small>
                                 </div>
                                 <div class="bg-primary bg-opacity-10 p-3 rounded-circle">
-                                    <i class="bi bi-receipt text-primary fs-3"></i>
+                                    <i class="bi bi-graph-up text-primary fs-3"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Most Frequent Store -->
                 <div class="col-md-4">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-body">
                             <h6 class="text-muted text-uppercase small">Most Frequent Store</h6>
                             <div class="d-flex justify-content-between align-items-center mt-3">
                                 <div>
-                                    <h4 class="fw-bold mb-0" id="topStoreText">-</h4>
-                                    <small class="text-muted">Top Visited</small>
+                                    <h4 class="fw-bold mb-0">@(string.IsNullOrEmpty(Model.MostFrequentStore) ? "-" : Model.MostFrequentStore)</h4>
+                                    <small class="text-muted">@Model.MostFrequentStoreVisits visits</small>
                                 </div>
                                 <div class="bg-warning bg-opacity-10 p-3 rounded-circle">
                                     <i class="bi bi-shop text-warning fs-3"></i>
@@ -96,9 +101,10 @@
                 </div>
             </div>
 
-            <div class="card border-0 shadow-sm mb-4">
+            <!-- Daily Spending Chart -->
+            <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0 py-3">
-                    <h5 class="mb-0 fw-bold">Spending Analysis</h5>
+                    <h5 class="mb-0 fw-bold">Daily Spending - @DateTime.Now.ToString("MMMM yyyy")</h5>
                 </div>
                 <div class="card-body">
                     <canvas id="spendingChart" height="100"></canvas>
@@ -108,71 +114,368 @@
     </div>
 </div>
 
+<!-- Add Receipt Modal -->
 <div class="modal fade" id="addReceiptModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Receipt</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addReceiptForm">
-                    <div class="mb-3">
-                        <label class="form-label">Store Name</label>
-                        <input type="text" class="form-control" id="storeName" placeholder="e.g. Whole Foods Market" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Date</label>
-                        <input type="date" class="form-control" id="receiptDate" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Total Amount</label>
-                        <input type="number" step="0.01" class="form-control" id="totalAmount" placeholder="0.00" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Receipt Image</label>
-                        <input type="file" class="form-control" id="receiptImage">
-                        <small class="text-muted">Supports: JPG, PNG</small>
-                    </div>
-                </form>
+            <!-- Error Alert -->
+            <div id="errorAlert" class="alert alert-danger alert-dismissible fade show m-3" role="alert" style="display:none;">
+                <span id="errorMessage"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" onclick="saveReceipt()">Save Receipt</button>
-            </div>
+            <form id="addReceiptForm">
+                <div class="modal-body">
+                    <!-- OCR Scan Section -->
+                    <div class="mb-4 p-3 bg-light rounded border">
+                        <h6 class="fw-bold mb-3"><i class="bi bi-camera me-2"></i>Scan Receipt (OCR)</h6>
+                        <div class="row g-2">
+                            <div class="col-md-8">
+                                <input type="file" class="form-control" id="ocrImage" accept="image/*">
+                                <small class="text-muted">Upload a receipt photo and scan with Azure OCR</small>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-primary w-100" id="scanOcrBtn">
+                                    <i class="bi bi-cloud-upload me-1"></i> Scan
+                                </button>
+                            </div>
+                        </div>
+                        <!-- OCR Loading -->
+                        <div id="ocrLoading" class="text-center mt-3" style="display:none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span class="ms-2">Scanning with Azure OCR...</span>
+                        </div>
+                        <!-- OCR Success -->
+                        <div id="ocrSuccess" class="alert alert-success mt-3 mb-0 py-2" style="display:none;">
+                            <i class="bi bi-check-circle me-1"></i> <strong>Success!</strong> Store name and total amount have been filled.
+                        </div>
+                        <!-- OCR Result Preview -->
+                        <div id="ocrResult" class="mt-3" style="display:none;">
+                            <a class="text-muted small" data-bs-toggle="collapse" href="#ocrTextCollapse" role="button">
+                                <i class="bi bi-chevron-down"></i> Show scanned text
+                            </a>
+                            <div class="collapse mt-2" id="ocrTextCollapse">
+                                <div class="border rounded bg-white p-2" style="max-height: 150px; overflow-y: auto;">
+                                    <pre id="ocrText" class="mb-0" style="white-space: pre-wrap; font-size: 11px;"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Store Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="storeName" placeholder="e.g. BİM, A101, Migros..." required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="receiptDate" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Total Amount (₺) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₺</span>
+                                    <input type="number" step="0.01" class="form-control" id="totalAmount" placeholder="0.00" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tags (comma-separated)</label>
+                                <input type="text" class="form-control" id="tags" placeholder="e.g. Market, Haftalık...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i> Save Receipt</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-    const API_BASE_URL = "https://localhost:7018";
+    // Set today's date as default
+    document.getElementById('receiptDate').valueAsDate = new Date();
 
-    document.addEventListener("DOMContentLoaded", function () {
-        loadDashboardData();
+    // OCR Parsing Function - Supports different receipt formats
+    function parseOcrText(text) {
+        const result = { storeName: null, totalAmount: null, date: null };
+        if (!text) return result;
+
+        const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+
+        // 1. Find store name
+        // Priority 1: Find line containing "A.Ş." (company name)
+        for (let i = 0; i < Math.min(10, lines.length); i++) {
+            const line = lines[i];
+            if (line.includes('A.Ş.') || line.includes('A.S.')) {
+                result.storeName = line;
+                break;
+            }
+        }
+
+        // Priority 2: First meaningful line (if A.Ş. not found)
+        if (!result.storeName && lines.length > 0) {
+            for (let i = 0; i < Math.min(3, lines.length); i++) {
+                const line = lines[i];
+                if (line.length > 5 && !line.match(/^\d+$/) && !line.toLowerCase().includes('mgz')) {
+                    result.storeName = line;
+                    break;
+                }
+            }
+        }
+
+        // 2. Find TOPLAM/Toplam (Total)
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const lineUpper = line.toUpperCase();
+
+            // Excluded: TOPKDV, Toplam KDV (Total VAT)
+            const isToplamLine = lineUpper.includes('TOPLAM') || line.includes('Toplam');
+            const isExcluded = lineUpper.includes('TOPKDV') || lineUpper.includes('TOPLAM KDV') || line.includes('Toplam KDV');
+
+            if (isToplamLine && !isExcluded) {
+                const starMatch = line.match(/\*\s*([\d.,]+)/);
+                if (starMatch) {
+                    const cleanAmount = starMatch[1].replace(/\./g, '').replace(',', '.');
+                    const parsed = parseFloat(cleanAmount);
+                    if (!isNaN(parsed) && parsed > 0) {
+                        result.totalAmount = parsed;
+                        break;
+                    }
+                }
+
+                const numMatches = line.match(/[\d.,]+/g);
+                if (numMatches) {
+                    for (let j = numMatches.length - 1; j >= 0; j--) {
+                        const cleanAmount = numMatches[j].replace(/\./g, '').replace(',', '.');
+                        const parsed = parseFloat(cleanAmount);
+                        if (!isNaN(parsed) && parsed > 10) {
+                            result.totalAmount = parsed;
+                            break;
+                        }
+                    }
+                    if (result.totalAmount) break;
+                }
+
+                if (!result.totalAmount && i + 1 < lines.length) {
+                    const nextLine = lines[i + 1];
+                    const nextStarMatch = nextLine.match(/\*\s*([\d.,]+)/);
+                    if (nextStarMatch) {
+                        const cleanAmount = nextStarMatch[1].replace(/\./g, '').replace(',', '.');
+                        const parsed = parseFloat(cleanAmount);
+                        if (!isNaN(parsed) && parsed > 0) {
+                            result.totalAmount = parsed;
+                            break;
+                        }
+                    } else {
+                        const numMatch = nextLine.match(/([\d.,]+)/);
+                        if (numMatch) {
+                            const cleanAmount = numMatch[1].replace(/\./g, '').replace(',', '.');
+                            const parsed = parseFloat(cleanAmount);
+                            if (!isNaN(parsed) && parsed > 10) {
+                                result.totalAmount = parsed;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. TARİH/Tarih satırını bul
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const lineUpper = line.toUpperCase();
+
+            if (lineUpper.includes('TARİH') || lineUpper.includes('TARIH')) {
+                let dateMatch = line.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+                if (dateMatch) {
+                    result.date = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+                    break;
+                }
+                if (i + 1 < lines.length) {
+                    dateMatch = lines[i + 1].match(/(\d{2})\.(\d{2})\.(\d{4})/);
+                    if (dateMatch) {
+                        result.date = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!result.date) {
+            for (let i = 0; i < lines.length; i++) {
+                const dateMatch = lines[i].match(/(\d{2})\.(\d{2})\.(\d{4})/);
+                if (dateMatch) {
+                    result.date = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    // OCR Scan Button
+    document.getElementById('scanOcrBtn').addEventListener('click', async function() {
+        const fileInput = document.getElementById('ocrImage');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert('Please select a receipt photo first.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('image', fileInput.files[0]);
+
+        document.getElementById('ocrLoading').style.display = 'block';
+        document.getElementById('ocrSuccess').style.display = 'none';
+        document.getElementById('ocrResult').style.display = 'none';
+        this.disabled = true;
+
+        try {
+            const response = await fetch('/Receipt/ScanTest', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            document.getElementById('ocrLoading').style.display = 'none';
+            this.disabled = false;
+
+            if (result.success && result.data) {
+                const rawText = result.data.rawText || result.data.RawText || '';
+
+                if (rawText && rawText.length > 0) {
+                    document.getElementById('ocrResult').style.display = 'block';
+                    document.getElementById('ocrText').textContent = rawText;
+
+                    const parsed = parseOcrText(rawText);
+
+                    if (parsed.storeName) {
+                        document.getElementById('storeName').value = parsed.storeName;
+                    }
+                    if (parsed.totalAmount) {
+                        document.getElementById('totalAmount').value = parsed.totalAmount.toFixed(2);
+                    }
+                    if (parsed.date) {
+                        document.getElementById('receiptDate').value = parsed.date;
+                    }
+
+                    document.getElementById('ocrSuccess').style.display = 'block';
+                } else {
+                    alert('No text found in the image.');
+                }
+            } else {
+                alert(result.message || 'OCR processing failed.');
+            }
+        } catch (error) {
+            document.getElementById('ocrLoading').style.display = 'none';
+            this.disabled = false;
+            alert('Connection error: ' + error.message);
+        }
     });
 
-    async function loadDashboardData() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/receipts/dashboard-stats`);
+    // Form submission
+    document.getElementById('addReceiptForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-            if (!response.ok) {
-                console.error("API Error: Could not fetch data.");
+        const storeName = document.getElementById('storeName').value;
+        const receiptDate = document.getElementById('receiptDate').value;
+        const totalAmount = document.getElementById('totalAmount').value;
+        const tags = document.getElementById('tags')?.value || '';
+        
+        // Hide error alert
+        document.getElementById('errorAlert').style.display = 'none';
+
+        if (!storeName || !receiptDate || !totalAmount) {
+            showError('Please fill all required fields');
+            return;
+        }
+
+        const request = {
+            storeName: storeName,
+            date: new Date(receiptDate).toISOString(),
+            totalAmount: parseFloat(totalAmount),
+            tags: tags,
+            imagePath: null,
+            items: []
+        };
+
+        try {
+            // Web Controller'a istek gönder (API değil)
+            const response = await fetch('/Receipt/CreateAjax', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(request)
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/Auth/Login';
                 return;
             }
 
-            const data = await response.json();
+            const result = await response.json();
 
-            // Fill Cards
-            document.getElementById("totalSpendText").innerText = data.totalSpending.toFixed(2) + "₺";
-            document.getElementById("receiptCountText").innerText = data.receiptCount;
-            document.getElementById("topStoreText").innerText = data.topStore;
-            document.getElementById("currentMonthText").innerText = data.currentMonth;
+            if (result.success) {
+                alert('Receipt added successfully!');
+                document.getElementById('addReceiptForm').reset();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addReceiptModal'));
+                modal.hide();
+                location.reload();
+            } else {
+                showError(result.message || 'Failed to add receipt');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Network error. Please try again.');
+        }
+    });
 
-            // Draw Chart
+    function showError(message) {
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorAlert').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Load and display chart
+    document.addEventListener('DOMContentLoaded', function () {
+        const dailyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailySpending, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+
+        if (dailyData && dailyData.length > 0) {
+            // Tarih formatını düzelt - date string'i doğrudan kullan
+            const labels = dailyData.map(d => {
+                if (d.date) {
+                    // "yyyy-MM-dd" formatındaki tarihi "dd/MM" olarak göster
+                    const parts = d.date.split('-');
+                    if (parts.length === 3) {
+                        return parts[2] + '/' + parts[1];
+                    }
+                }
+                return d.date || '';
+            });
+            const amounts = dailyData.map(d => d.amount || 0);
+
             const ctx = document.getElementById('spendingChart').getContext('2d');
-
             let gradient = ctx.createLinearGradient(0, 0, 0, 400);
             gradient.addColorStop(0, 'rgba(25, 135, 84, 0.4)');
             gradient.addColorStop(1, 'rgba(25, 135, 84, 0.0)');
@@ -180,71 +483,41 @@
             new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    labels: labels,
                     datasets: [{
-                        label: 'Weekly Spending',
-                        data: [data.totalSpending * 0.2, data.totalSpending * 0.5, data.totalSpending * 0.1, data.totalSpending * 0.2],
+                        label: 'Daily Spending',
+                        data: amounts,
                         borderColor: '#198754',
                         backgroundColor: gradient,
                         borderWidth: 2,
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: '#198754',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { display: false }
+                        legend: {
+                            display: true,
+                            labels: { usePointStyle: true, padding: 20 }
+                        }
                     },
                     scales: {
-                        y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                        y: {
+                            beginAtZero: true,
+                            grid: { borderDash: [5, 5] },
+                            ticks: { callback: function(value) { return '₺' + value.toFixed(2); } }
+                        },
                         x: { grid: { display: false } }
                     }
                 }
             });
-
-        } catch (error) {
-            console.error("Connection Error:", error);
-            document.getElementById("totalSpendText").innerText = "API Error";
-            document.getElementById("totalSpendText").classList.add("text-danger", "fs-6");
         }
-    }
-
-    async function saveReceipt() {
-        const storeName = document.getElementById("storeName").value;
-        const date = document.getElementById("receiptDate").value;
-        const amount = document.getElementById("totalAmount").value;
-
-        if (!storeName || !date || !amount) {
-            alert("Please fill in all required fields!");
-            return;
-        }
-
-        const newReceipt = {
-            storeName: storeName,
-            date: date,
-            totalAmount: parseFloat(amount),
-            imagePath: "default.png"
-        };
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/receipts`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(newReceipt)
-            });
-
-            if (response.ok) {
-                alert("Receipt added successfully!");
-                location.reload();
-            } else {
-                alert("Error! API did not respond correctly.");
-            }
-        } catch (error) {
-            console.error("Error:", error);
-            alert("Connection error! Is the API running?");
-        }
-    }
+    });
 </script>
+
