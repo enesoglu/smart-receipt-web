@@ -6,3 +6,4 @@ obj/project.assets.json
 *.cache
 /wwwroot
 /Views/Shared
+/.idea
