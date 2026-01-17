@@ -48,7 +48,10 @@ namespace smart_receipt_web.Models
         public DateTime Date { get; set; }
         public decimal TotalAmount { get; set; }
         public string? ImagePath { get; set; }
-        public string? Tags { get; set; }
+        public int? CategoryId { get; set; }
+        public string? CategoryName { get; set; }
+        public int? StoreId { get; set; }
+        public StoreDto? Store { get; set; }
         public List<ReceiptItemDto> Items { get; set; } = new List<ReceiptItemDto>();
     }
 
@@ -57,6 +60,10 @@ namespace smart_receipt_web.Models
         public int Id { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public decimal Price { get; set; }
+        public decimal Quantity { get; set; } = 1;
+        public decimal UnitPrice { get; set; }
+        public string? Barcode { get; set; }
+        public string? Unit { get; set; }
     }
 
     public class CreateReceiptRequest
@@ -65,7 +72,8 @@ namespace smart_receipt_web.Models
         public DateTime Date { get; set; }
         public decimal TotalAmount { get; set; }
         public string? ImagePath { get; set; }
-        public string? Tags { get; set; }
+        public int? CategoryId { get; set; }
+        public int? StoreId { get; set; }
         public List<ReceiptItemDto> Items { get; set; } = new List<ReceiptItemDto>();
     }
 
@@ -76,8 +84,40 @@ namespace smart_receipt_web.Models
         public DateTime Date { get; set; }
         public decimal TotalAmount { get; set; }
         public string? ImagePath { get; set; }
-        public string? Tags { get; set; }
+        public int? CategoryId { get; set; }
+        public int? StoreId { get; set; }
         public List<ReceiptItemDto> Items { get; set; } = new List<ReceiptItemDto>();
+    }
+
+    // ===== Category Models =====
+    public class CategoryDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? IconName { get; set; }
+    }
+
+    public class CreateCategoryRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? IconName { get; set; }
+    }
+
+    public class CategoriesViewModel
+    {
+        public List<CategoryDto> Categories { get; set; } = new List<CategoryDto>();
+    }
+
+    // ===== Store Models =====
+    public class StoreDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Address { get; set; }
+        public string? Phone { get; set; }
+        public string? TaxNumber { get; set; }
     }
 
     // ===== Dashboard & Statistics Models =====
@@ -132,7 +172,9 @@ namespace smart_receipt_web.Models
         public DateTime Date { get; set; }
         public decimal TotalAmount { get; set; }
         public string? ImagePath { get; set; }
-        public string? Tags { get; set; }
+        public int? CategoryId { get; set; }
+        public List<CategoryDto> Categories { get; set; } = new List<CategoryDto>();
+        public List<StoreDto> Stores { get; set; } = new List<StoreDto>();
         public List<ReceiptItemViewModel> Items { get; set; } = new List<ReceiptItemViewModel>();
     }
 

@@ -23,6 +23,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link text-secondary mx-2 mb-2" href="/Categories">
+                            <i class="bi bi-tags me-2"></i> Categories
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link text-secondary mx-2 mb-2" href="/Home/Reports">
                             <i class="bi bi-bar-chart-line me-2"></i> Reports
                         </a>
@@ -82,7 +87,7 @@
                             <tr class="border-bottom">
                                 <th>Store Name</th>
                                 <th>Date</th>
-                                <th>Tags</th>
+                                <th>Category</th>
                                 <th>Total Amount</th>
                                 <th>Actions</th>
                             </tr>
@@ -100,12 +105,9 @@
                                             @receipt.Date.ToString("MMM dd, yyyy")
                                         </td>
                                         <td>
-                                            @if (!string.IsNullOrEmpty(receipt.Tags))
+                                            @if (!string.IsNullOrEmpty(receipt.CategoryName))
                                             {
-                                                @foreach (var tag in receipt.Tags.Split(','))
-                                                {
-                                                    <span class="badge bg-info">@tag.Trim()</span>
-                                                }
+                                                <span class="badge bg-info">@receipt.CategoryName</span>
                                             }
                                             else
                                             {
@@ -203,7 +205,11 @@
                         <div class="col-md-8">
                             <div class="mb-3">
                                 <label class="form-label">Store Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="storeName" placeholder="e.g. BİM, A101, Migros..." required>
+                                <input type="text" class="form-control" id="storeName" list="storeList" placeholder="e.g. BİM, A101, Migros..." required>
+                                <datalist id="storeList">
+                                    <!-- Will be populated via JavaScript -->
+                                </datalist>
+                                <small class="text-muted">Select from existing stores or type a new store name</small>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -225,8 +231,11 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Tags (comma-separated)</label>
-                                <input type="text" class="form-control" id="tags" placeholder="e.g. Market, Haftalık...">
+                                <label class="form-label">Category</label>
+                                <select class="form-select" id="categoryId">
+                                    <option value="">Select Category...</option>
+                                    <!-- Will be populated via JavaScript -->
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -243,6 +252,47 @@
 <script>
     // Set today's date as default
     document.getElementById('receiptDate').valueAsDate = new Date();
+
+    // Load categories and stores on page load
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadCategories();
+        await loadStores();
+    });
+
+    async function loadCategories() {
+        try {
+            const response = await fetch('/Categories/GetAll');
+            const result = await response.json();
+            if (result.success && result.data) {
+                const select = document.getElementById('categoryId');
+                result.data.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    select.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading categories:', error);
+        }
+    }
+
+    async function loadStores() {
+        try {
+            const response = await fetch('/Categories/GetStores');
+            const result = await response.json();
+            if (result.success && result.data) {
+                const datalist = document.getElementById('storeList');
+                result.data.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store.name;
+                    datalist.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading stores:', error);
+        }
+    }
 
     // OCR Parsing Function - Supports different receipt formats
     function parseOcrText(text) {
@@ -420,6 +470,14 @@
                         document.getElementById('receiptDate').value = parsed.date;
                     }
 
+                    // Store parsed items from API response (if available)
+                    if (result.data.items && result.data.items.length > 0) {
+                        window.parsedItems = result.data.items;
+                        console.log('Parsed items from API:', window.parsedItems);
+                    } else {
+                        window.parsedItems = [];
+                    }
+
                     // Show success
                     document.getElementById('ocrSuccess').style.display = 'block';
                 } else {
@@ -453,8 +511,8 @@
         const storeName = document.getElementById('storeName').value;
         const receiptDate = document.getElementById('receiptDate').value;
         const totalAmount = document.getElementById('totalAmount').value;
-        const tags = document.getElementById('tags')?.value || '';
-        
+        const categoryId = document.getElementById('categoryId')?.value || null;
+
         // Hide error alert
         document.getElementById('errorAlert').style.display = 'none';
 
@@ -463,13 +521,19 @@
             return;
         }
 
+        // Get parsed items if available
+        let items = [];
+        if (window.parsedItems && window.parsedItems.length > 0) {
+            items = window.parsedItems;
+        }
+
         const request = {
             storeName: storeName,
             date: new Date(receiptDate).toISOString(),
             totalAmount: parseFloat(totalAmount),
-            tags: tags,
+            categoryId: categoryId ? parseInt(categoryId) : null,
             imagePath: null,
-            items: []
+            items: items
         };
 
         try {

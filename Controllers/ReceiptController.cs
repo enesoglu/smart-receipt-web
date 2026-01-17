@@ -55,9 +55,10 @@ namespace smart_receipt_web.Controllers
         }
 
         // GET: Receipt/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View(new ReceiptEditViewModel { Date = DateTime.Today });
+            var categories = await _receiptApiService.GetCategoriesAsync();
+            return View(new ReceiptEditViewModel { Date = DateTime.Today, Categories = categories });
         }
 
         // POST: Receipt/ScanTest - OCR için AJAX endpoint (Azure OCR)
@@ -102,6 +103,7 @@ namespace smart_receipt_web.Controllers
         {
             if (!ModelState.IsValid)
             {
+                model.Categories = await _receiptApiService.GetCategoriesAsync();
                 return View(model);
             }
 
@@ -113,7 +115,7 @@ namespace smart_receipt_web.Controllers
                     Date = model.Date,
                     TotalAmount = model.TotalAmount,
                     ImagePath = model.ImagePath,
-                    Tags = model.Tags,
+                    CategoryId = model.CategoryId,
                     Items = model.Items.Select(i => new ReceiptItemDto
                     {
                         ProductName = i.ProductName,
@@ -124,17 +126,19 @@ namespace smart_receipt_web.Controllers
                 var result = await _receiptApiService.CreateReceiptAsync(request);
                 if (result != null)
                 {
-                    TempData["Success"] = "Fiş başarıyla eklendi.";
+                    TempData["Success"] = "Receipt added successfully.";
                     return RedirectToAction(nameof(Index));
                 }
 
-                TempData["Error"] = "Fiş eklenirken bir hata oluştu.";
+                TempData["Error"] = "An error occurred while adding receipt.";
+                model.Categories = await _receiptApiService.GetCategoriesAsync();
                 return View(model);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Create receipt error: {ex.Message}");
-                TempData["Error"] = "Fiş eklenirken bir hata oluştu.";
+                TempData["Error"] = "An error occurred while adding receipt.";
+                model.Categories = await _receiptApiService.GetCategoriesAsync();
                 return View(model);
             }
         }
@@ -147,10 +151,11 @@ namespace smart_receipt_web.Controllers
                 var receipt = await _receiptApiService.GetReceiptByIdAsync(id);
                 if (receipt == null)
                 {
-                    TempData["Error"] = "Fiş bulunamadı.";
+                    TempData["Error"] = "Receipt not found.";
                     return RedirectToAction(nameof(Index));
                 }
 
+                var categories = await _receiptApiService.GetCategoriesAsync();
                 var model = new ReceiptEditViewModel
                 {
                     Id = receipt.Id,
@@ -158,7 +163,8 @@ namespace smart_receipt_web.Controllers
                     Date = receipt.Date,
                     TotalAmount = receipt.TotalAmount,
                     ImagePath = receipt.ImagePath,
-                    Tags = receipt.Tags,
+                    CategoryId = receipt.CategoryId,
+                    Categories = categories,
                     Items = receipt.Items.Select(i => new ReceiptItemViewModel
                     {
                         Id = i.Id,
@@ -172,7 +178,7 @@ namespace smart_receipt_web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"Edit receipt error: {ex.Message}");
-                TempData["Error"] = "Fiş yüklenirken bir hata oluştu.";
+                TempData["Error"] = "An error occurred while loading receipt.";
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -189,6 +195,7 @@ namespace smart_receipt_web.Controllers
 
             if (!ModelState.IsValid)
             {
+                model.Categories = await _receiptApiService.GetCategoriesAsync();
                 return View(model);
             }
 
@@ -201,7 +208,7 @@ namespace smart_receipt_web.Controllers
                     Date = model.Date,
                     TotalAmount = model.TotalAmount,
                     ImagePath = model.ImagePath,
-                    Tags = model.Tags,
+                    CategoryId = model.CategoryId,
                     Items = model.Items.Select(i => new ReceiptItemDto
                     {
                         Id = i.Id,
@@ -213,17 +220,19 @@ namespace smart_receipt_web.Controllers
                 var result = await _receiptApiService.UpdateReceiptAsync(id, request);
                 if (result != null)
                 {
-                    TempData["Success"] = "Fiş başarıyla güncellendi.";
+                    TempData["Success"] = "Receipt updated successfully.";
                     return RedirectToAction(nameof(Index));
                 }
 
-                TempData["Error"] = "Fiş güncellenirken bir hata oluştu.";
+                TempData["Error"] = "An error occurred while updating receipt.";
+                model.Categories = await _receiptApiService.GetCategoriesAsync();
                 return View(model);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Update receipt error: {ex.Message}");
-                TempData["Error"] = "Fiş güncellenirken bir hata oluştu.";
+                TempData["Error"] = "An error occurred while updating receipt.";
+                model.Categories = await _receiptApiService.GetCategoriesAsync();
                 return View(model);
             }
         }
@@ -238,17 +247,17 @@ namespace smart_receipt_web.Controllers
                 var result = await _receiptApiService.DeleteReceiptAsync(id);
                 if (result)
                 {
-                    TempData["Success"] = "Fiş başarıyla silindi.";
+                    TempData["Success"] = "Receipt deleted successfully.";
                 }
                 else
                 {
-                    TempData["Error"] = "Fiş silinirken bir hata oluştu.";
+                    TempData["Error"] = "An error occurred while deleting receipt.";
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Delete receipt error: {ex.Message}");
-                TempData["Error"] = "Fiş silinirken bir hata oluştu.";
+                TempData["Error"] = "An error occurred while deleting receipt.";
             }
 
             return RedirectToAction(nameof(Index));
@@ -288,26 +297,26 @@ namespace smart_receipt_web.Controllers
             {
                 if (request == null)
                 {
-                    return Json(new { success = false, message = "Geçersiz istek." });
+                    return Json(new { success = false, message = "Invalid request." });
                 }
 
                 if (string.IsNullOrEmpty(request.StoreName))
                 {
-                    return Json(new { success = false, message = "Mağaza adı gerekli." });
+                    return Json(new { success = false, message = "Store name is required." });
                 }
 
                 var result = await _receiptApiService.CreateReceiptAsync(request);
                 if (result != null)
                 {
-                    return Json(new { success = true, message = "Fiş başarıyla eklendi.", data = result });
+                    return Json(new { success = true, message = "Receipt added successfully.", data = result });
                 }
 
-                return Json(new { success = false, message = "Fiş eklenirken bir hata oluştu." });
+                return Json(new { success = false, message = "An error occurred while adding receipt." });
             }
             catch (Exception ex)
             {
                 _logger.LogError($"CreateAjax error: {ex.Message}");
-                return Json(new { success = false, message = "Bir hata oluştu." });
+                return Json(new { success = false, message = "An error occurred." });
             }
         }
     }

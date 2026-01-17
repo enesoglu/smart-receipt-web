@@ -160,6 +160,33 @@ namespace smart_receipt_web.Services
             }
         }
 
+        // ===== Categories =====
+
+        public async Task<List<CategoryDto>> GetCategoriesAsync()
+        {
+            try
+            {
+                SetAuthorizationHeader();
+                var response = await _httpClient.GetAsync("/api/categories");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var result = JsonSerializer.Deserialize<ApiResponse<List<CategoryDto>>>(content, options);
+                    return result?.Data ?? new List<CategoryDto>();
+                }
+
+                _logger.LogWarning($"GetCategories failed: {response.StatusCode}");
+                return new List<CategoryDto>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"GetCategories error: {ex.Message}");
+                return new List<CategoryDto>();
+            }
+        }
+
         // ===== Statistics =====
 
         public async Task<DashboardViewModel> GetDashboardDataAsync()
@@ -296,9 +323,81 @@ namespace smart_receipt_web.Services
             }
         }
 
+        // ===== Stores =====
+
+        public async Task<List<StoreDto>> GetStoresAsync()
+        {
+            try
+            {
+                SetAuthorizationHeader();
+                var response = await _httpClient.GetAsync("/api/stores");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var result = JsonSerializer.Deserialize<ApiResponse<List<StoreDto>>>(content, options);
+                    return result?.Data ?? new List<StoreDto>();
+                }
+
+                _logger.LogWarning($"GetStores failed: {response.StatusCode}");
+                return new List<StoreDto>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"GetStores error: {ex.Message}");
+                return new List<StoreDto>();
+            }
+        }
+
+        // ===== Category CRUD =====
+
+        public async Task<CategoryDto?> CreateCategoryAsync(CreateCategoryRequest request)
+        {
+            try
+            {
+                SetAuthorizationHeader();
+                var json = JsonSerializer.Serialize(request);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync("/api/categories", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var result = JsonSerializer.Deserialize<ApiResponse<CategoryDto>>(responseContent, options);
+                    return result?.Data;
+                }
+
+                _logger.LogWarning($"CreateCategory failed: {response.StatusCode}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"CreateCategory error: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<bool> DeleteCategoryAsync(int id)
+        {
+            try
+            {
+                SetAuthorizationHeader();
+                var response = await _httpClient.DeleteAsync($"/api/categories/{id}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"DeleteCategory error: {ex.Message}");
+                return false;
+            }
+        }
+
         // ===== OCR =====
 
-        public async Task<Dictionary<string, string>?> ScanReceiptAsync(IFormFile image)
+        public async Task<Dictionary<string, object>?> ScanReceiptAsync(IFormFile image)
         {
             try
             {
@@ -316,7 +415,7 @@ namespace smart_receipt_web.Services
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var result = JsonSerializer.Deserialize<ApiResponse<Dictionary<string, string>>>(responseContent, options);
+                    var result = JsonSerializer.Deserialize<ApiResponse<Dictionary<string, object>>>(responseContent, options);
                     return result?.Data;
                 }
 

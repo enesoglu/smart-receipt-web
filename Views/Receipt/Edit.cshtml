@@ -45,10 +45,17 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Tags" class="form-label">Tags (comma-separated)</label>
-                            <input asp-for="Tags" class="form-control" placeholder="e.g. Groceries, Organic, Weekly Shop">
-                            <small class="text-muted">Optional: categorize your receipt</small>
+                            <label asp-for="CategoryId" class="form-label">Category</label>
+                            <select asp-for="CategoryId" class="form-select">
+                                <option value="">-- Select Category --</option>
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <option value="@category.Id">@category.Name</option>
+                                }
+                            </select>
+                            <small class="text-muted">Optional: select a category</small>
                         </div>
+
 
                         <div class="mb-3">
                             <label asp-for="ImagePath" class="form-label">Image Path</label>
